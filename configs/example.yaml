@@ -1,0 +1,76 @@
+# Groundwork example configuration.
+# Every key is optional; defaults are in groundwork/config.py.
+
+# The model you are improving, served behind an OpenAI-compatible API
+# (vLLM, SGLang, TGI, llama.cpp server, Ollama, ...). Example:
+#   vllm serve /path/to/your-model --served-model-name my-model --port 8000
+model:
+  kind: openai
+  model: my-model
+  base_url: http://localhost:8000/v1
+  ownership: self              # your own model: fine to learn from its outputs
+  supports_prefill: true       # vLLM supports continue_final_message
+  max_tokens: 1024
+
+# Optional teacher for trace generation (data.actor: teacher). It must be a model whose
+# license/terms allow training other models on its outputs, e.g. an open-weight model
+# you host yourself. Anthropic, OpenAI and Gemini APIs are refused (see compliance.py).
+# teacher:
+#   kind: openai
+#   model: Qwen/Qwen3-32B
+#   base_url: http://localhost:8001/v1
+#   ownership: third_party
+#   provider: Qwen (Alibaba)
+#   terms_url: https://huggingface.co/Qwen/Qwen3-32B/blob/main/LICENSE
+#   distillation_permitted: true
+
+agent:
+  max_steps: 6
+  tools: [python, search, read_file]
+  corpus: examples/corpus.jsonl  # replace with your knowledge base, or set search_url
+  files_root: .
+  self_consistency_n: 1          # set to 4-8 at inference for harder tasks
+
+runtime:
+  agent_mode: auto
+  guard:
+    enabled: true
+    samples: 5
+    accept_agreement: 0.6
+  tone:
+    style_guide: examples/style_guide.yaml
+    rewrite: true
+
+data:
+  tasks: examples/tasks.jsonl
+  work_dir: work
+  media_root: .
+  actor: model                   # self-improvement: the model learns from its own verified work
+  attempts_per_task: 4
+  keep_per_task: 1
+  first_thought_prefix: false
+  probe_samples: 5
+  tone_examples: examples/tone_examples.jsonl
+  replay: ""                     # JSONL of {"messages": [...]} from your original training mix
+  replay_fraction: 0.2
+  decontaminate_against: []      # eval task files that must never leak into training
+
+train:
+  base_model: /path/to/your-model   # Hugging Face format weights of the same model
+  output_dir: runs/sft
+  max_length: 4096
+  lr: 1.0e-5
+  epochs: 2
+  batch_size: 1
+  grad_accum: 8
+  multimodal: false                 # true for vision-language models
+  lora:
+    enabled: true
+    r: 64
+    alpha: 128
+
+eval:
+  tasks: [examples/tasks.jsonl]
+  modes: [direct, agent, assistant]
+  output_dir: reports
+  baseline_report: ""               # e.g. reports/baseline/report.json
