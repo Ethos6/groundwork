@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "groundwork"
+version = "0.1.0"
+description = "Make an existing LLM better at doing tasks, less prone to hallucination, and consistent in tone."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0",
+    "requests>=2.31",
+    "pillow>=10.0",
+]
+
+[project.optional-dependencies]
+# Fine-tuning and local (Hugging Face) models
+train = ["torch>=2.2", "transformers>=4.45", "safetensors>=0.4"]
+lora = ["peft>=0.11"]
+multi-gpu = ["accelerate>=0.30"]
+# Extra media/file readers
+video = ["av>=12.0"]
+files = ["pypdf>=4.0", "python-docx>=1.1"]
+dev = ["pytest>=8.0"]
+all = [
+    "torch>=2.2", "transformers>=4.45", "safetensors>=0.4", "peft>=0.11",
+    "accelerate>=0.30", "av>=12.0", "pypdf>=4.0", "python-docx>=1.1",
+]
+
+[project.scripts]
+groundwork = "groundwork.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["groundwork*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
